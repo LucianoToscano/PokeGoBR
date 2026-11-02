@@ -49,6 +49,8 @@ class LiveScannerService : Service() {
     private val busy = AtomicBoolean(false)
     private val main = Handler(Looper.getMainLooper())
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val speciesNames by lazy { HubData.cachedSpecies(this).map { it.name } }
+    private var resumeAutomaticAfterMenu = true
     private var lastFrame = 0L
     private var stopped = false
     override fun onBind(intent: Intent?): IBinder? = null
@@ -220,52 +222,48 @@ class LiveScannerService : Service() {
             recognizer.process(InputImage.fromBitmap(bitmap, 0))
                 .addOnSuccessListener { detected ->
                     val fields = ScreenshotParser.parse(detected.text)
+                    // Validate names against the local species index. Never accept "PESO"
+                    // or other menu labels as Pokémon names.
+                    val readout = ScannerReadoutParser.parse(detected.text, speciesNames)
+                    val cp = readout.cp ?: fields.cp
+                    val hp = readout.hp ?: fields.hp
+                    val safeName = readout.species
                     val scene = ScreenContextClassifier.classify(
-                        detected.text, bars.barRowsFound, fields.cp, fields.hp
+                        detected.text, bars.barRowsFound, cp, hp
                     )
-                    val confidenceLabel = when (scene.confidence) {
-                        SceneConfidence.HIGH -> "sinal forte"
-                        SceneConfidence.MEDIUM -> "sinal parcial"
-                        SceneConfidence.LOW -> "sem confirmação"
-                    }
-                    val cpHp = "PC " + (fields.cp?.toString() ?: "—") +
-                        " · PS " + (fields.hp?.toString() ?: "—")
-                    val probableName = if ((fields.cp != null || fields.hp != null) &&
-                        !fields.candidateName.isNullOrBlank()) {
-                        "\nNome OCR (conferir): " + fields.candidateName
-                    } else ""
+                    val brief = (safeName?.let { "$it · " } ?: "") +
+                        "PC " + (cp?.toString() ?: "—") +
+                        " · PS " + (hp?.toString() ?: "—")
                     when (scene.scene) {
                         ScanScene.APPRAISAL -> {
-                            val suggested = bars.proposedIvs
-                            val reading = if (suggested != null && suggested.size == 3) {
-                                "IV A/D/PS ≈ " + suggested.joinToString("/") +
-                                    "\nEstimativa visual. Confirme na avaliação."
+                            val iv = bars.proposedIvs
+                            val compactIv = iv?.let { ScannerReadoutParser.tentativeIvLabel(it) }
+                            if (compactIv != null) {
+                                updateStatus("◉ " + compactIv,
+                                    brief + "\nIV estimado: " + iv.joinToString("/") +
+                                        "\nLeitura experimental. Confira as barras antes de salvar.")
                             } else {
-                                "Três barras encontradas; IV inconclusivo.\nConfira a avaliação manualmente."
+                                updateStatus("◉ Avaliação · IV inconclusivo",
+                                    brief + "\nAvaliação encontrada, mas barras insuficientes.\n" +
+                                        "Não é possível confirmar IV.")
                             }
-                            updateStatus("◉ Avaliação detectada",
-                                cpHp + probableName + "\n" + reading + "\nContexto: " + confidenceLabel)
                         }
                         ScanScene.DETAILS -> {
-                            updateStatus("◉ Detalhes do Pokémon",
-                                cpHp + probableName +
-                                    "\nAbra Avaliar para ler IVs.\nContexto: " + confidenceLabel)
+                            updateStatus("◉ " + (safeName ?: "Pokémon") +
+                                (cp?.let { " · PC $it" } ?: ""),
+                                brief + "\nAbra Avaliar para conferir os IVs.")
                         }
                         ScanScene.MOVES -> {
-                            updateStatus("◉ Tela de golpes",
-                                "Golpes detectados pelo texto da tela.\n" +
-                                    "A leitura detalhada ainda está em desenvolvimento.\nContexto: " +
-                                    confidenceLabel)
+                            updateStatus("◉ Golpes", "Leitura detalhada dos golpes ainda em desenvolvimento.")
                         }
                         ScanScene.RAID -> {
                             val raidInfo = RaidScreenParser.parse(detected.text)
-                            updateStatus("◉ Tela de raide",
-                                if (raidInfo.recognized) raidInfo.display()
-                                else "Raide possivelmente detectada; dados inconclusivos.")
+                            updateStatus("◉ Raide", if (raidInfo.recognized)
+                                raidInfo.display() else "Raide possivelmente detectada; dados inconclusivos.")
                         }
                         ScanScene.OTHER -> {
-                            updateStatus("◉ Captura funcionando",
-                                "Nenhuma avaliação identificada.\nAbra um Pokémon e toque em Avaliar.")
+                            updateStatus("◉ Scanner ativo",
+                                "Abra um Pokémon e toque em Avaliar. Nenhum IV foi confirmado.")
                         }
                     }
                 }
@@ -294,17 +292,18 @@ class LiveScannerService : Service() {
             }
         }
         val handle = TextView(this).apply {
-            text = "◉  Iniciando captura"; textSize = 13f; setTextColor(Color.WHITE)
-            setPadding(dp(11), dp(9), dp(11), dp(9))
+            text = "◉ Scanner"; textSize = 13f; setTextColor(Color.WHITE)
+            setPadding(dp(10), dp(8), dp(10), dp(8))
         }
         bubbleTitle = handle
         root.addView(handle)
         val details = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; visibility = View.VISIBLE
+            // Closed by default: never cover the appraisal bars or name.
+            orientation = LinearLayout.VERTICAL; visibility = View.GONE
             setPadding(dp(10), 0, dp(10), dp(9))
         }
         textView = TextView(this).apply {
-            text = "Abra a avaliação do Pokémon.\nO resultado aparecerá aqui."
+            text = "Abra Avaliar. Os dados detalhados aparecerão aqui."
             textSize = 12f; setTextColor(Color.rgb(230, 249, 255))
         }
         details.addView(textView)
@@ -319,9 +318,9 @@ class LiveScannerService : Service() {
             setTextColor(Color.rgb(160, 232, 228))
             setPadding(dp(5), dp(6), dp(12), dp(6))
             setOnClickListener {
-                scanGate.setAutomatic(true)
-                updateStatus("◉ Modo automático",
-                    "Captura a cada ~1,7s. Abra a avaliação do Pokémon.")
+                resumeAutomaticAfterMenu = true
+                updateStatus("◉ Automático",
+                    "Modo automático selecionado. Feche este painel para retomar a leitura.")
             }
         }
         val tapMode = TextView(this).apply {
@@ -330,8 +329,9 @@ class LiveScannerService : Service() {
             setTextColor(Color.WHITE)
             setPadding(dp(5), dp(6), dp(5), dp(6))
             setOnClickListener {
+                resumeAutomaticAfterMenu = false
                 scanGate.setAutomatic(false)
-                updateStatus("◉ Modo por toque",
+                updateStatus("◉ Por toque",
                     "Toque em Escanear agora para analisar um quadro da tela.")
             }
         }
@@ -344,9 +344,13 @@ class LiveScannerService : Service() {
             setTextColor(Color.rgb(156, 232, 226))
             setPadding(0, dp(6), 0, dp(6))
             setOnClickListener {
+                // Hide controls before requesting the next frame to reduce OCR
+                // contamination from our own expanded overlay.
+                details.visibility = View.GONE
+                scanGate.setAutomatic(resumeAutomaticAfterMenu)
                 scanGate.requestScan()
                 updateStatus("◉ Escaneando",
-                    "Aguardando o próximo quadro da tela compartilhada.")
+                    "Aguardando quadro do Pokémon, sem o painel de controles aberto.")
             }
         }
         details.addView(scanNow)
@@ -363,7 +367,7 @@ class LiveScannerService : Service() {
             // Overlay visible in screenshots and permitted MediaProjection captures.
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
-        ).apply { gravity = Gravity.TOP or Gravity.START; x = dp(12); y = dp(125) }
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = dp(12); y = dp(82) }
         overlayParams = params
         handle.setOnTouchListener(object : View.OnTouchListener {
             var downX = 0f; var downY = 0f; var x0 = 0; var y0 = 0; var moved = false
@@ -383,8 +387,18 @@ class LiveScannerService : Service() {
                             runCatching { manager?.updateViewLayout(root, params) }
                         }
                     }
-                    MotionEvent.ACTION_UP -> if (!moved)
-                        details.visibility = if (details.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                    MotionEvent.ACTION_UP -> if (!moved) {
+                        if (details.visibility == View.VISIBLE) {
+                            details.visibility = View.GONE
+                            scanGate.setAutomatic(resumeAutomaticAfterMenu)
+                        } else {
+                            resumeAutomaticAfterMenu = scanGate.isAutomatic()
+                            // Pause continuous scans while our controls are open:
+                            // otherwise their own text can corrupt Pokémon OCR.
+                            scanGate.setAutomatic(false)
+                            details.visibility = View.VISIBLE
+                        }
+                    }
                 }
                 return true
             }
