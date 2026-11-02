@@ -1,10 +1,11 @@
 # PokeGoBR
 
-Central modular Android para Pokémon GO — versão **0.0.6 (Scanner ao vivo + detector de barras V2 experimental)**.
+Central modular Android para Pokémon GO — versão **0.0.7 (Scanner ao vivo, captura por app e detector V2)**.
 
-## Funcional na 0.0.6
+## Funcional na 0.0.7
 
 - Scanner direto da tela do Android, com consentimento por sessão via MediaProjection; bolha flutuante arrastável que pode ser fechada pelo usuário.
+- **Android 14 ou superior:** o seletor de captura oferece a opção de compartilhar somente o Pokémon GO (um app) ou toda a tela, conforme o sistema permitir. A 0.0.5/0.0.6 restringia indevidamente ao display inteiro.
 - Captura da galeria permanece como alternativa.
 - OCR ML Kit local para nome, CP/PC e HP/PS, com revisão dos dados.
 - **Detector V2 original:** localiza o trilho inteiro das três barras de IV (preenchimento laranja/vermelho + parte cinza) para tratar IV baixo e 15/15/15.
@@ -23,6 +24,7 @@ python3 patches/scanner_v003.py
 python3 patches/scanner_v004.py
 python3 patches/scanner_v005.py
 python3 patches/scanner_v006.py
+python3 patches/scanner_v007.py
 bash ./gradlew --no-daemon :app:assembleDebug
 ```
 
@@ -39,6 +41,6 @@ Os testes de regressão em Python geram imagens sintéticas (1/15/14, 15/15/15, 
 
 ## Privacidade e limites
 
-O serviço MediaProjection usa autorização do Android, notificação de captura em primeiro plano e pode ser encerrado por toque. O modo ao vivo é **alfa**: deve ser validado no Android 10–16, especialmente em transição de tela, rotação, proteção de screenshot, consumo de bateria e precisão das barras. Não há lobbies de raides online nesta versão.
+O serviço MediaProjection usa autorização do Android, notificação de captura em primeiro plano e pode ser encerrado por toque. A captura de apenas um aplicativo exclui conteúdo de outros apps e da interface do sistema, aumentando a privacidade; essa escolha pertence à interface do Android. Em versões mais antigas do Android, a opção de um único app pode não existir. O modo ao vivo é **alfa**: deve ser validado no Android 10–16, especialmente em transição de tela, rotação, proteção de screenshot, consumo de bateria e precisão das barras. Não há lobbies de raides online nesta versão.
 
 O código implementa comportamento próprio e não redistribui código, imagens, modelos ou APKs proprietários de Poke Genie, Calcy IV e PokeRaid.
