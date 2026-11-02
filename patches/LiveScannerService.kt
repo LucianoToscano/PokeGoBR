@@ -240,7 +240,7 @@ class LiveScannerService : Service() {
                             val compactIv = iv?.let { ScannerReadoutParser.tentativeIvLabel(it) }
                             if (compactIv != null) {
                                 updateStatus("◉ " + compactIv,
-                                    brief + "\nIV estimado: " + iv.joinToString("/") +
+                                    brief + "\nIV estimado: " + (iv?.joinToString("/") ?: "—") +
                                         "\nLeitura experimental. Confira as barras antes de salvar.")
                             } else {
                                 updateStatus("◉ Avaliação · IV inconclusivo",
