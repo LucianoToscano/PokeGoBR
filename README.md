@@ -1,8 +1,8 @@
 # PokeGoBR
 
-Central modular Android para Pokémon GO — versão **0.0.9 (Scanner ao vivo, captura por app e detector V2)**.
+Central modular Android para Pokémon GO — versão **0.0.10 (Scanner de contexto, captura ao vivo e detector V2)**.
 
-## Funcional na 0.0.9
+## Funcional na 0.0.10
 
 - Scanner direto da tela do Android, com consentimento por sessão via MediaProjection; bolha flutuante arrastável que pode ser fechada pelo usuário.
 - **Android 14 ou superior:** o seletor de captura oferece a opção de compartilhar somente o Pokémon GO (um app) ou toda a tela, conforme o sistema permitir. A 0.0.5/0.0.6 restringia indevidamente ao display inteiro.
@@ -10,6 +10,8 @@ Central modular Android para Pokémon GO — versão **0.0.9 (Scanner ao vivo, c
 - Corrige o ciclo de vida de bitmaps para não reciclar uma imagem antes de a leitura OCR concluir.
 - Captura da galeria permanece como alternativa.
 - OCR ML Kit local para nome, CP/PC e HP/PS, com revisão dos dados.
+- Novo classificador independente de telas (Avaliação, Detalhes, Golpes, Raide e Outra). Exibe uma mensagem apropriada na bolha e não confunde o botão Avaliar com barras reais.
+- Na tela de avaliação, somente mostra valores de IV tentativos quando as três barras foram detectadas, sempre exigindo conferência.
 - **Detector V2 original:** localiza o trilho inteiro das três barras de IV (preenchimento laranja/vermelho + parte cinza) para tratar IV baixo e 15/15/15.
 - Em caso de barras encobertas, avaliação ausente ou leitura ambígua, não deve inventar IV. As sugestões continuam experimentais e requerem conferência humana.
 - Ao abrir nova imagem, dados antigos da galeria são descartados para evitar reutilização indevida.
@@ -29,7 +31,8 @@ python3 patches/scanner_v006.py
 python3 patches/scanner_v007.py
 python3 patches/scanner_v008.py
 python3 patches/scanner_v009.py
-bash ./gradlew --no-daemon :app:assembleDebug
+python3 patches/scanner_v010.py
+bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
 ```
 
 Requer JDK 17, Android SDK 35 e ambiente com Gradle configurado. Arquivos editáveis da build aparecem na área **Releases**, juntos do APK e SHA256SUMS. Não modifique a fonte zipada sem ajustar a sequência de patches. Código do detector integrado: `app/src/main/java/br/com/pokegobr/AppraisalBarDetector.kt` após os patches. Fonte de referência: `patches/AppraisalBarDetectorV2.kt`.
@@ -59,3 +62,6 @@ Ver `docs/AUDITORIA_REFERENCIAS_SCANNER_POKEDEX_2026-11-02.md` (somente fatos ob
 - Corrigido: a janela flutuante do scanner 0.0.5–0.0.8 incluía `WindowManager.LayoutParams.FLAG_SECURE`, que bloqueava prints/gravações da janela no Android. Essa flag foi removida.
 - O scanner continua solicitando consentimento de captura por `MediaProjection` e processa imagens localmente. A correção não altera as proteções de privacidade de aplicativos externos.
 - Teste em Android real: tire um print da home PokeGoBR e da bolha flutuante, e verifique se a leitura MediaProjection continua funcionando.
+
+## Classificador de contexto (SC-102)
+O código próprio ScreenContextClassifier.kt usa sinais visuais do detector V2 e textos de OCR, sem copiar o Poke Genie. O motor completo de Pokédex e rankings PvP ainda não foi implementado; não exibe cálculos inexistentes. Testes Kotlin com casos de avaliação, tela normal, golpes, raides e incerteza. Ver docs/SCANNER_CONTEXTO_SC102_2026-11-02.md.

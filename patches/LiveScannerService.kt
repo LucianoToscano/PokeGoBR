@@ -210,24 +210,70 @@ class LiveScannerService : Service() {
     }
 
     private fun analyze(bitmap: Bitmap) {
-        val bars = runCatching { AppraisalBarDetector.inspectBitmap(bitmap) }.getOrDefault(AppraisalBarPreview())
+        val bars = runCatching { AppraisalBarDetector.inspectBitmap(bitmap) }
+            .getOrDefault(AppraisalBarPreview())
         try {
             recognizer.process(InputImage.fromBitmap(bitmap, 0))
                 .addOnSuccessListener { detected ->
                     val fields = ScreenshotParser.parse(detected.text)
-                    val iv = bars.proposedIvs?.joinToString("/") ?: "indefinido"
-                    val summary = "${fields.candidateName ?: "Pokémon"} · PC ${fields.cp ?: "—"} · PS ${fields.hp ?: "—"}\nIV A/D/PS: $iv ${if (bars.proposedIvs != null) "(estimativa)" else "(conferir)"}"
-                    if (fields.cp == null && fields.hp == null && bars.barRowsFound == 0) {
-                        updateStatus("◉ Captura funcionando", "Imagem recebida. Abra o Pokémon e toque em Avaliar.")
-                    } else {
-                        updateStatus("◉ Pokémon analisado", summary)
+                    val scene = ScreenContextClassifier.classify(
+                        detected.text, bars.barRowsFound, fields.cp, fields.hp
+                    )
+                    val confidenceLabel = when (scene.confidence) {
+                        SceneConfidence.HIGH -> "sinal forte"
+                        SceneConfidence.MEDIUM -> "sinal parcial"
+                        SceneConfidence.LOW -> "sem confirmação"
+                    }
+                    val cpHp = "PC " + (fields.cp?.toString() ?: "—") +
+                        " · PS " + (fields.hp?.toString() ?: "—")
+                    val probableName = if ((fields.cp != null || fields.hp != null) &&
+                        !fields.candidateName.isNullOrBlank()) {
+                        "\nNome OCR (conferir): " + fields.candidateName
+                    } else ""
+                    when (scene.scene) {
+                        ScanScene.APPRAISAL -> {
+                            val suggested = bars.proposedIvs
+                            val reading = if (suggested != null && suggested.size == 3) {
+                                "IV A/D/PS ≈ " + suggested.joinToString("/") +
+                                    "\nEstimativa visual. Confirme na avaliação."
+                            } else {
+                                "Três barras encontradas; IV inconclusivo.\nConfira a avaliação manualmente."
+                            }
+                            updateStatus("◉ Avaliação detectada",
+                                cpHp + probableName + "\n" + reading + "\nContexto: " + confidenceLabel)
+                        }
+                        ScanScene.DETAILS -> {
+                            updateStatus("◉ Detalhes do Pokémon",
+                                cpHp + probableName +
+                                    "\nAbra Avaliar para ler IVs.\nContexto: " + confidenceLabel)
+                        }
+                        ScanScene.MOVES -> {
+                            updateStatus("◉ Tela de golpes",
+                                "Golpes detectados pelo texto da tela.\n" +
+                                    "A leitura detalhada ainda está em desenvolvimento.\nContexto: " +
+                                    confidenceLabel)
+                        }
+                        ScanScene.RAID -> {
+                            updateStatus("◉ Tela de raide",
+                                "Raide identificada pelo OCR.\n" +
+                                    "Chefe, tempo e jogadores ainda precisam de validação.")
+                        }
+                        ScanScene.OTHER -> {
+                            updateStatus("◉ Captura funcionando",
+                                "Nenhuma avaliação identificada.\nAbra um Pokémon e toque em Avaliar.")
+                        }
                     }
                 }
                 .addOnFailureListener {
                     updateStatus("⚠ OCR indisponível", "Não foi possível reconhecer texto nesta captura.")
                 }
                 .addOnCompleteListener { bitmap.recycle(); busy.set(false) }
-        } catch (_: Exception) { bitmap.recycle(); busy.set(false) }
+        } catch (error: Exception) {
+            Log.e("PokeGoBR-Scanner", "Falha no pipeline de OCR", error)
+            updateStatus("⚠ Leitura indisponível", "Falha no OCR. Pare e inicie uma nova captura.")
+            bitmap.recycle()
+            busy.set(false)
+        }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).roundToInt()
