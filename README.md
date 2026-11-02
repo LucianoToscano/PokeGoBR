@@ -1,38 +1,44 @@
 # PokeGoBR
-Central modular Android para Pokémon GO — versão **0.0.5 (Scanner ao vivo experimental)**.
 
-## Funcional nesta versão
-- IVs desconhecidos por padrão: resultados não podem ser salvos com IV fictício.
-- Nova captura limpa os dados anteriores se o OCR não os identificar.
-- Home visual compacta, paisagem completa e artes próprias Mewtwo, Charizard, logo e 11 ícones de navegação.
-- Scanner por captura de tela (galeria do Android) com OCR ML Kit no aparelho.
-- Reconhecimento inicial de PC/CP e PS/HP e revisão manual dos dados.
-- Detector visual experimental das três barras coloridas; sugere valores apenas quando uma escala de comprimento estiver visível.
-- IV calculado **somente** após os três valores serem preenchidos ou aceitos pelo usuário; sugestões não são confirmadas automaticamente.
-- Raides: leitura inicial de texto de capturas, sem criação automática de lobby.
-- Histórico local e sem transmissão de imagens.
+Central modular Android para Pokémon GO — versão **0.0.6 (Scanner ao vivo + detector de barras V2 experimental)**.
 
-## Código completo
-A base está em `source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip`; os patches auditáveis `patches/scanner_v003.py` e `patches/scanner_v004.py` atualizam para 0.0.4 durante a compilação. O detector é código próprio em `patches/AppraisalBarDetector.kt`. O build publica um ZIP da fonte consolidada, além do APK.
+## Funcional na 0.0.6
 
-## Compilar
-No GitHub: **Releases → PokeGoBR Scanner alfa** (APK publicado após CI verde) ou **Actions → Build PokeGoBR APK Debug → Artifacts**.
-No computador (JDK 17 e Android SDK 35):
+- Scanner direto da tela do Android, com consentimento por sessão via MediaProjection; bolha flutuante arrastável que pode ser fechada pelo usuário.
+- Captura da galeria permanece como alternativa.
+- OCR ML Kit local para nome, CP/PC e HP/PS, com revisão dos dados.
+- **Detector V2 original:** localiza o trilho inteiro das três barras de IV (preenchimento laranja/vermelho + parte cinza) para tratar IV baixo e 15/15/15.
+- Em caso de barras encobertas, avaliação ausente ou leitura ambígua, não deve inventar IV. As sugestões continuam experimentais e requerem conferência humana.
+- Ao abrir nova imagem, dados antigos da galeria são descartados para evitar reutilização indevida.
+- Home visual própria com 11 ícones, histórico local de Pokémon confirmados e leitura inicial de texto em raides.
+- Nenhuma imagem enviada ou armazenada pelo scanner ao vivo; não exige root, modificação ou injeção no jogo.
+
+## Arquitetura de fonte e compilação
+
+O repositório contém a fonte original em `source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip` e os patches sequenciais, aplicados pelo CI:
+
 ```bash
-unzip -o source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip -d .
-bash ./gradlew :app:assembleDebug
+unzip -oq source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip -d .
+python3 patches/scanner_v003.py
+python3 patches/scanner_v004.py
+python3 patches/scanner_v005.py
+python3 patches/scanner_v006.py
+bash ./gradlew --no-daemon :app:assembleDebug
 ```
-O APK fica em `app/build/outputs/apk/debug/app-debug.apk`.
 
-### Segurança
-Sem root, injeção no Pokémon GO, cliente modificado ou captura silenciosa. Não reaproveita código de aplicativos comerciais.
+Requer JDK 17, Android SDK 35 e ambiente com Gradle configurado. Arquivos editáveis da build aparecem na área **Releases**, juntos do APK e SHA256SUMS. Não modifique a fonte zipada sem ajustar a sequência de patches. Código do detector integrado: `app/src/main/java/br/com/pokegobr/AppraisalBarDetector.kt` após os patches. Fonte de referência: `patches/AppraisalBarDetectorV2.kt`.
 
-### Limites da leitura visual (0.0.4)
-O algoritmo detecta faixas alaranjadas alinhadas em três linhas. Ele só propõe A/D/PS se conseguir observar uma extensão de barra de referência compatível; caso contrário exige entrada manual. Ainda é preciso validar com capturas reais em diferentes idiomas, aparelhos e resoluções. Não oferece overlay em tempo real nem gerenciamento online de lobbies nesta versão.
+## Testes
 
-### Scanner ao vivo 0.0.5
-- MediaProjection solicita consentimento do Android para a sessão de captura da tela.
-- Uma bolha flutuante arrastável exibe nome/PC/PS reconhecidos localmente com ML Kit e sugestões de barras de IV quando visualmente interpretáveis.
-- Sem envio, gravação, upload de screenshots, root ou alteração do jogo.
-- Requer permissão de sobreposição (`SYSTEM_ALERT_WINDOW`) e serviço de primeiro plano `mediaProjection`. O usuário pode encerrar pela bolha/notificação ou pelos controles do sistema.
-- Requer testes em dispositivo real; app protegido por `FLAG_SECURE` ou alterações de tamanho/orientação podem limitar a leitura. Valores são estimativas e não são confirmados automaticamente.
+```bash
+python3 -m pip install numpy pillow
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Os testes de regressão em Python geram imagens sintéticas (1/15/14, 15/15/15, 0/0/0, imagem vazia, oclusão). O build Android compila o Kotlin. Foi também realizada inspeção offline com seis imagens de referência do `Scanners.zip` fornecido pelo usuário; as capturas **não** entram no repositório público. Esses testes não equivalem a teste em dispositivo real ou medição estatística de acurácia.
+
+## Privacidade e limites
+
+O serviço MediaProjection usa autorização do Android, notificação de captura em primeiro plano e pode ser encerrado por toque. O modo ao vivo é **alfa**: deve ser validado no Android 10–16, especialmente em transição de tela, rotação, proteção de screenshot, consumo de bateria e precisão das barras. Não há lobbies de raides online nesta versão.
+
+O código implementa comportamento próprio e não redistribui código, imagens, modelos ou APKs proprietários de Poke Genie, Calcy IV e PokeRaid.
