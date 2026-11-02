@@ -48,13 +48,18 @@ jobs:
           python3 patches/scanner_v010.py
           python3 patches/scanner_v011.py
           python3 patches/scanner_v012.py
+          python3 patches/scanner_v013.py
           # O seletor deve manter a escolha do app ou da tela inteira.
           grep -F 'val request = projectionManager.createScreenCaptureIntent()' app/src/main/java/br/com/pokegobr/MainActivity.kt
           if grep -F 'MediaProjectionConfig.createConfigForDefaultDisplay()' app/src/main/java/br/com/pokegobr/MainActivity.kt; then
             echo 'ERRO: captura restrita a tela inteira' >&2
             exit 1
           fi
-          grep -F 'versionName = "0.0.12"' app/build.gradle.kts
+          grep -F 'versionName = "0.0.13"' app/build.gradle.kts
+          grep -F 'UnifiedModuleScreen(' app/src/main/java/br/com/pokegobr/MainActivity.kt
+          grep -F 'HubCollectionImporter.importStats' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
+          test -f app/src/main/assets/pokegobr_reference_catalog.json
+          test -f app/src/test/java/br/com/pokegobr/UnifiedHubTest.kt
           grep -F 'RaidScreenParser.parse(detected.text)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/RaidScreenParserTest.kt
           grep -F 'scanGate.shouldProcess(SystemClock.elapsedRealtime())' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
@@ -68,12 +73,12 @@ jobs:
           grep -F 'override fun onCapturedContentResize' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           grep -F 'display.setSurface(reader.surface)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           mkdir -p dist
-          zip -qr dist/PokeGoBR-v0.0.12-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
-      - name: Fonte editavel 0.0.12 corrigida
+          zip -qr dist/PokeGoBR-v0.0.13-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
+      - name: Fonte editavel 0.0.13 corrigida
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.12-scanner-fonte
-          path: dist/PokeGoBR-v0.0.12-FONTE-EDITAVEL.zip
+          name: PokeGoBR-v0.0.13-scanner-fonte
+          path: dist/PokeGoBR-v0.0.13-FONTE-EDITAVEL.zip
           if-no-files-found: error
           retention-days: 30
       - name: Testar detector V2 (fixtures sintéticas)
@@ -102,12 +107,12 @@ jobs:
           bash ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.12-scanner-alpha.apk
-          sha256sum dist/PokeGoBR-v0.0.12-scanner-alpha.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.13-scanner-alpha.apk
+          sha256sum dist/PokeGoBR-v0.0.13-scanner-alpha.apk > dist/SHA256SUMS.txt
       - name: Disponibilizar APK nos artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.12-scanner-debug
+          name: PokeGoBR-v0.0.13-scanner-debug
           path: dist/
           if-no-files-found: error
           retention-days: 30
@@ -118,8 +123,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.12-scanner-alpha-build${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/PokeGoBR-v0.0.12-scanner-alpha.apk dist/PokeGoBR-v0.0.12-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
-            --title "PokeGoBR 0.0.12 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
-            --notes "APK debug de testes. Alfa 0.0.12: leitura OCR conservadora de raide (chefe, tempo e participantes com rótulos explícitos), preservando modos Automático/Por toque, classificador e detector V2. Testes JVM e Python; requer validação física. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
+          TAG="v0.0.13-scanner-alpha-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/PokeGoBR-v0.0.13-scanner-alpha.apk dist/PokeGoBR-v0.0.13-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
+            --title "PokeGoBR 0.0.13 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
+            --notes "APK debug de testes. Alfa 0.0.13: leitura OCR conservadora de raide (chefe, tempo e participantes com rótulos explícitos), preservando modos Automático/Por toque, classificador e detector V2. Testes JVM e Python; requer validação física. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
             --prerelease --latest=false --target "${GITHUB_SHA}"
