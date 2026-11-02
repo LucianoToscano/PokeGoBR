@@ -90,26 +90,41 @@ internal object HubImportV15 {
         } else bytes
         val text = String(input, Charsets.UTF_8).removePrefix("\uFEFF").trimStart()
         return when {
-            text.startsWith("{") -> ImportedBatch("pgsstats", "PGSStats",
-                HubCollectionImporter.parseAndMinimize(text).let { source ->
-                    // Existing tested parser; resolve numeric species IDs using the catalog.
-                    val items = JSONObject(text).getJSONArray("pokemons")
-                    val result = JSONArray()
-                    for (i in 0 until source.length()) {
-                        // Real PGSStats has eggs with species ID 0, which are skipped
-                        // by the historical parser; map the ID from each source item
-                        // only when aligned. The fallback preserves the #ID label.
-                        val dst = source.getJSONObject(i)
-                        val raw = items.optJSONObject(i)
-                        val id = raw?.optInt("pokemonId", 0) ?: 0
-                        val best = if (id in 1..10000) species[id] else null
-                        if (best != null) dst.put("name", best)
-                        result.put(dst)
-                    }
-                    result
-                })
+            text.startsWith("{") -> ImportedBatch("pgsstats", "PGSStats", parsePgs(text, species))
             else -> parseCsv(text, species)
         }
+    }
+
+    private fun parsePgs(text: String, dex: Map<Int, String>): JSONArray {
+        val root = JSONObject(text)
+        val rows = root.optJSONArray("pokemons")
+            ?: throw IllegalArgumentException("JSON sem a lista pokemons")
+        val out = JSONArray()
+        for (i in 0 until minOf(MAX_ROWS, rows.length())) {
+            val row = rows.optJSONObject(i) ?: continue
+            if (row.optBoolean("isEgg", false)) continue
+            val id = row.optInt("pokemonId", row.optInt("speciesId", -1))
+                .takeIf { it in 1..10000 }
+            val speciesName = row.optString("speciesName").trim().takeIf {
+                it.isNotBlank() && it.length <= 55
+            }
+            if (id == null && speciesName == null) continue
+            val name = id?.let { dex[it] } ?: speciesName ?: "#$id"
+            val attack = row.optInt("individualAttack", -1).takeIf { it in 0..15 }
+            val defense = row.optInt("individualDefense", -1).takeIf { it in 0..15 }
+            val stamina = row.optInt("individualStamina", -1).takeIf { it in 0..15 }
+            val iv = if (attack != null && defense != null && stamina != null)
+                "$attack/$defense/$stamina" else "—"
+            val item = JSONObject()
+                .put("name", name)
+                .put("cp", cp(row.opt("cp")?.toString().orEmpty()))
+                .put("iv", iv)
+            if (id != null) item.put("speciesId", id)
+            out.put(item)
+        }
+        if (out.length() == 0)
+            throw IllegalArgumentException("Nenhum Pokémon válido no PGSStats")
+        return out
     }
 
     private fun iv(raw: String): Int? {
