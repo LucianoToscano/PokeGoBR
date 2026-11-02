@@ -73,7 +73,10 @@ jobs:
           grep -F 'override fun onCapturedContentResize' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           grep -F 'display.setSurface(reader.surface)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           mkdir -p dist
-          zip -qr dist/PokeGoBR-v0.0.13-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
+          # Backup reconstituível: fonte resultante + fonte base, todos os patches, testes e Arquivo Mestre.
+          test -f docs/ARQUIVO_MESTRE_POKEGOBR_v013_2026-11-02.md
+          test -f patches/scanner_v013.py
+          zip -qr dist/PokeGoBR-v0.0.13-FONTE-EDITAVEL.zip app/src app/build.gradle.kts app/src/main/AndroidManifest.xml build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md source patches docs .github/workflows/android-debug.yml
       - name: Fonte editavel 0.0.13 corrigida
         uses: actions/upload-artifact@v4
         with:
