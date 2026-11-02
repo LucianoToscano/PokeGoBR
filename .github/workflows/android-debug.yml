@@ -37,13 +37,14 @@ jobs:
           test -f gradlew
           test -d app/src/main
           python3 patches/scanner_v003.py
+          python3 patches/scanner_v004.py
           mkdir -p dist
-          zip -qr dist/PokeGoBR-v0.0.3-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
-      - name: Fonte editavel 0.0.3 corrigida
+          zip -qr dist/PokeGoBR-v0.0.4-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
+      - name: Fonte editavel 0.0.4 corrigida
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.3-scanner-fonte
-          path: dist/PokeGoBR-v0.0.3-FONTE-EDITAVEL.zip
+          name: PokeGoBR-v0.0.4-scanner-fonte
+          path: dist/PokeGoBR-v0.0.4-FONTE-EDITAVEL.zip
           if-no-files-found: error
           retention-days: 30
       - uses: actions/setup-java@v4
@@ -66,12 +67,12 @@ jobs:
           bash ./gradlew --no-daemon --stacktrace :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.3-scanner-alpha.apk
-          sha256sum dist/PokeGoBR-v0.0.3-scanner-alpha.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.4-scanner-alpha.apk
+          sha256sum dist/PokeGoBR-v0.0.4-scanner-alpha.apk > dist/SHA256SUMS.txt
       - name: Disponibilizar APK nos artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.3-scanner-debug
+          name: PokeGoBR-v0.0.4-scanner-debug
           path: dist/
           if-no-files-found: error
           retention-days: 30
@@ -82,8 +83,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.3-scanner-alpha-build${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/PokeGoBR-v0.0.3-scanner-alpha.apk dist/PokeGoBR-v0.0.3-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
-            --title "PokeGoBR 0.0.3 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
-            --notes "APK debug de testes. Scanner inicial por imagem com OCR local, leitura preliminar de PC/PS, IVs desconhecidos ate confirmacao manual e protecao contra reutilizar dados de outra captura. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
+          TAG="v0.0.4-scanner-alpha-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/PokeGoBR-v0.0.4-scanner-alpha.apk dist/PokeGoBR-v0.0.4-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
+            --title "PokeGoBR 0.0.4 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
+            --notes "APK debug de testes. Scanner OCR local + detecção experimental de três barras da avaliação; sugestão numérica apenas com escala detectada e sempre sujeita a confirmação manual. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
             --prerelease --latest=false --target "${GITHUB_SHA}"
