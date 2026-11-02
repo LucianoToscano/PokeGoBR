@@ -174,6 +174,10 @@ internal class LiveIvResultCard(
             background = shape(accent, 8f)
             setOnClickListener {
                 val snapshot = lastResult ?: return@setOnClickListener
+                if (snapshot.species.isNullOrBlank() || snapshot.cp == null) {
+                    hintView?.text = "Espécie/PC desconhecidos: não salvo"
+                    return@setOnClickListener
+                }
                 onSave(snapshot)
                 hintView?.text = "Estimativa salva na coleção local"
             }
