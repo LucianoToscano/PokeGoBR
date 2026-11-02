@@ -1,38 +1,72 @@
 name: Build PokeGoBR APK Debug
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: pokegobr-scanner-debug-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   android-debug:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: Expand editable Android source
-        run: unzip -oq source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip -d .
+      - name: Verificar e extrair fonte Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE=source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip
+          test -s "$ARCHIVE"
+          unzip -t "$ARCHIVE" | tail -n 2
+          unzip -oq "$ARCHIVE" -d .
+          test -f settings.gradle.kts -o -f settings.gradle
+          test -f gradlew
+          test -d app/src/main
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install Android SDK 35
+      - name: Preparar Android SDK 35
         shell: bash
         run: |
-          echo "Android SDK: ${ANDROID_HOME}"
-          find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f
+          set -euo pipefail
           SDK_MANAGER="$(find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f | head -n 1)"
           test -n "$SDK_MANAGER"
           yes | "$SDK_MANAGER" --licenses >/dev/null || true
           "$SDK_MANAGER" --install "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
-      - name: Assemble Android debug APK
-        run: bash ./gradlew --no-daemon :app:assembleDebug
-      - name: Upload installable debug APK
+      - name: Compilar e testar APK debug
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./gradlew --no-daemon --stacktrace :app:assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.2-scanner-alpha.apk
+          sha256sum dist/PokeGoBR-v0.0.2-scanner-alpha.apk > dist/SHA256SUMS.txt
+      - name: Disponibilizar APK nos artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.2-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: PokeGoBR-v0.0.2-scanner-debug
+          path: dist/
           if-no-files-found: error
           retention-days: 30
+      - name: Publicar APK de testes no Releases
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v0.0.2-scanner-alpha-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/PokeGoBR-v0.0.2-scanner-alpha.apk dist/SHA256SUMS.txt \
+            --title "PokeGoBR 0.0.2 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
+            --notes "APK debug de testes. Scanner inicial por imagem com OCR local, leitura preliminar de PC/PS e revisão de IVs. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
+            --prerelease --latest=false --target "${GITHUB_SHA}"
