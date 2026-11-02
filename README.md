@@ -1,8 +1,11 @@
 # PokeGoBR
 
-Central modular Android para Pokémon GO — versão **0.0.14 (Scanner de contexto, captura ao vivo e detector V2)**.
+Central modular Android para Pokémon GO — versão **0.0.15 (Scanner de contexto, captura ao vivo e detector V2)**.
 
-## Funcional na 0.0.14
+## Funcional na 0.0.15
+
+- **Importação multi-fonte:** Poke Genie CSV, Calcy IV histórico CSV, PGSStats.json e PGSStats.zip. Registros locais por origem, pesquisa de espécie/PC/IV e visualização de ranks GL, UL e LL com indicação da fonte original. PGSData.dat (Java serializado) é identificado e recusado por segurança. Os arquivos reais do usuário NÃO são publicados nem integrados ao APK; a seleção ocorre no próprio Android. Leia docs/IMPORTADORES_EXPORTACOES_v015_2026-11-02.md.
+
 
 - **Scanner compacto revisado com base em capturas reais:** a bolha fica recolhida por padrão, libera a avaliação do jogo, abre controles somente ao toque e pausa a análise automática enquanto o menu está aberto. A leitura de nomes confirma correspondência com a Pokédex local (não aceita PESO como nome), reconhece PC281/PC 281 e 58/58 PS e apresenta IV visual estimado com percentual/estrelas em uma linha curta. Valores estimados permanecem sujeitos à validação no jogo. Consulte docs/CORRECAO_SCANNER_REAIS_FROAKIE_v014_2026-11-02.md.
 
@@ -45,6 +48,7 @@ python3 patches/scanner_v011.py
 python3 patches/scanner_v012.py
 python3 patches/scanner_v013.py
 python3 patches/scanner_v014.py
+python3 patches/scanner_v015.py
 bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
 ```
 
@@ -83,9 +87,9 @@ O código próprio ScreenContextClassifier.kt usa sinais visuais do detector V2 
 O XAPK e as 37 capturas do Calcy IV foram inspecionados como referência para os modos de uso e a futura Pokédex. Banco proprietário, código DEX, modelos OCR e imagens externas NÃO são incluídos no PokeGoBR. Ver `docs/AUDITORIA_CALCY_IV_2026-11-02.md`. O simulador de fortalecimento, rankings PvP e dados offline são etapas futuras.
 
 ## Referência técnica PokeRaid 0.49
-O XAPK e 25 capturas do PokeRaid foram inspecionados. A etapa 0.0.14 acrescenta um leitor próprio de campos de raide com nove testes unitários. As imagens demonstram com mais detalhe o scanner de IV, a coleção e o simulador, mas não comprovam o fluxo de salas online. Não copiamos código, modelos, ícones ou dados internos do PokeRaid. Ver `docs/AUDITORIA_POKERAID_2026-11-02.md`.
+O XAPK e 25 capturas do PokeRaid foram inspecionados. A etapa 0.0.15 acrescenta um leitor próprio de campos de raide com nove testes unitários. As imagens demonstram com mais detalhe o scanner de IV, a coleção e o simulador, mas não comprovam o fluxo de salas online. Não copiamos código, modelos, ícones ou dados internos do PokeRaid. Ver `docs/AUDITORIA_POKERAID_2026-11-02.md`.
 
-## Arquivo Mestre unificado (0.0.14)
+## Arquivo Mestre unificado (0.0.15)
 Leia `docs/ARQUIVO_MESTRE_POKEGOBR_v013_2026-11-02.md`. Este documento distingue funcionalidades implementadas, parciais e pendentes, reunindo as seis auditorias estáticas de APK e o inventário histórico de 54 arquivos. O app não embute APKs/XAPKs, bibliotecas de terceiros proprietárias nem dados privados do Drive, e não oferece motor PvP GO, leilões nem salas de raides online nesta versão.
 
 ### Privacidade de dados importados
