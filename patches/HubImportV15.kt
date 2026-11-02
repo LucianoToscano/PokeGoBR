@@ -157,10 +157,9 @@ internal object HubImportV15 {
             val id = (if (genie) cell("Pokemon") else cell("Nr"))
                 .toIntOrNull()?.takeIf { it in 1..10000 }
             if (id == null) continue
-            val name = dex[id] ?: if (calcy) {
-                cell("Name").takeIf { it.isNotBlank() && it.length <= 55 &&
+            val name = dex[id] ?: (if (genie) cell("Nome") else cell("Name"))
+                .takeIf { it.isNotBlank() && it.length <= 55 &&
                     it !in listOf("?", " - ", "-") }
-            } else null
             val item = JSONObject()
                 .put("name", name ?: "#$id")
                 .put("speciesId", id)
