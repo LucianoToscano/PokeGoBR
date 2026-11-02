@@ -258,9 +258,10 @@ class LiveScannerService : Service() {
                                     confidenceLabel)
                         }
                         ScanScene.RAID -> {
+                            val raidInfo = RaidScreenParser.parse(detected.text)
                             updateStatus("◉ Tela de raide",
-                                "Raide identificada pelo OCR.\n" +
-                                    "Chefe, tempo e jogadores ainda precisam de validação.")
+                                if (raidInfo.recognized) raidInfo.display()
+                                else "Raide possivelmente detectada; dados inconclusivos.")
                         }
                         ScanScene.OTHER -> {
                             updateStatus("◉ Captura funcionando",
