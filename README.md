@@ -1,8 +1,8 @@
 # PokeGoBR
 
-Central modular Android para Pokémon GO — versão **0.0.8 (Scanner ao vivo, captura por app e detector V2)**.
+Central modular Android para Pokémon GO — versão **0.0.9 (Scanner ao vivo, captura por app e detector V2)**.
 
-## Funcional na 0.0.8
+## Funcional na 0.0.9
 
 - Scanner direto da tela do Android, com consentimento por sessão via MediaProjection; bolha flutuante arrastável que pode ser fechada pelo usuário.
 - **Android 14 ou superior:** o seletor de captura oferece a opção de compartilhar somente o Pokémon GO (um app) ou toda a tela, conforme o sistema permitir. A 0.0.5/0.0.6 restringia indevidamente ao display inteiro.
@@ -28,6 +28,7 @@ python3 patches/scanner_v005.py
 python3 patches/scanner_v006.py
 python3 patches/scanner_v007.py
 python3 patches/scanner_v008.py
+python3 patches/scanner_v009.py
 bash ./gradlew --no-daemon :app:assembleDebug
 ```
 
@@ -53,3 +54,8 @@ Depois de permitir a captura, a bolha começa mostrando **Iniciando captura** e 
 
 ## Referências de Pokédex e OCR
 Ver `docs/AUDITORIA_REFERENCIAS_SCANNER_POKEDEX_2026-11-02.md` (somente fatos observáveis de arquivos autorizados). O próximo módulo de Pokédex será independente, com dados Game Master versionados e fontes licenciadas; nenhuma biblioteca proprietária de terceiros é copiada para o APK.
+
+## Capturas de tela permitidas (0.0.9)
+- Corrigido: a janela flutuante do scanner 0.0.5–0.0.8 incluía `WindowManager.LayoutParams.FLAG_SECURE`, que bloqueava prints/gravações da janela no Android. Essa flag foi removida.
+- O scanner continua solicitando consentimento de captura por `MediaProjection` e processa imagens localmente. A correção não altera as proteções de privacidade de aplicativos externos.
+- Teste em Android real: tire um print da home PokeGoBR e da bolha flutuante, e verifique se a leitura MediaProjection continua funcionando.
