@@ -42,13 +42,21 @@ jobs:
           python3 patches/scanner_v004.py
           python3 patches/scanner_v005.py
           python3 patches/scanner_v006.py
+          python3 patches/scanner_v007.py
+          # O seletor deve manter a escolha do app ou da tela inteira.
+          grep -F 'val request = projectionManager.createScreenCaptureIntent()' app/src/main/java/br/com/pokegobr/MainActivity.kt
+          if grep -F 'MediaProjectionConfig.createConfigForDefaultDisplay()' app/src/main/java/br/com/pokegobr/MainActivity.kt; then
+            echo 'ERRO: captura restrita a tela inteira' >&2
+            exit 1
+          fi
+          grep -F 'versionName = "0.0.7"' app/build.gradle.kts
           mkdir -p dist
-          zip -qr dist/PokeGoBR-v0.0.6-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
-      - name: Fonte editavel 0.0.6 corrigida
+          zip -qr dist/PokeGoBR-v0.0.7-FONTE-EDITAVEL.zip app/src app/build.gradle.kts build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md
+      - name: Fonte editavel 0.0.7 corrigida
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.6-scanner-fonte
-          path: dist/PokeGoBR-v0.0.6-FONTE-EDITAVEL.zip
+          name: PokeGoBR-v0.0.7-scanner-fonte
+          path: dist/PokeGoBR-v0.0.7-FONTE-EDITAVEL.zip
           if-no-files-found: error
           retention-days: 30
       - name: Testar detector V2 (fixtures sintéticas)
@@ -77,12 +85,12 @@ jobs:
           bash ./gradlew --no-daemon --stacktrace :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.6-scanner-alpha.apk
-          sha256sum dist/PokeGoBR-v0.0.6-scanner-alpha.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.7-scanner-alpha.apk
+          sha256sum dist/PokeGoBR-v0.0.7-scanner-alpha.apk > dist/SHA256SUMS.txt
       - name: Disponibilizar APK nos artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.6-scanner-debug
+          name: PokeGoBR-v0.0.7-scanner-debug
           path: dist/
           if-no-files-found: error
           retention-days: 30
@@ -93,8 +101,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.6-scanner-alpha-build${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/PokeGoBR-v0.0.6-scanner-alpha.apk dist/PokeGoBR-v0.0.6-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
-            --title "PokeGoBR 0.0.6 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
-            --notes "APK debug de testes. Scanner ao vivo MediaProjection + OCR local e detector V2 experimental com trilho completo, abstenção quando imagem não permite e confirmação manual; testes sintéticos de regressão incluídos. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
+          TAG="v0.0.7-scanner-alpha-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/PokeGoBR-v0.0.7-scanner-alpha.apk dist/PokeGoBR-v0.0.7-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
+            --title "PokeGoBR 0.0.7 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
+            --notes "APK debug de testes. Corrige o seletor MediaProjection para oferecer captura de um app ou da tela inteira no Android 14+, preservando OCR local, bolha e detector V2; ainda requer testes no dispositivo. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
             --prerelease --latest=false --target "${GITHUB_SHA}"
