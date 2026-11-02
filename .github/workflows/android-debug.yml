@@ -18,6 +18,13 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - name: Disponibilizar fonte editável
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeGoBR-v0.0.2-scanner-fonte
+          path: source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip
+          if-no-files-found: error
+          retention-days: 30
       - name: Verificar e extrair fonte Android
         shell: bash
         run: |
