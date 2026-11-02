@@ -1,8 +1,10 @@
 # PokeGoBR
 
-Central modular Android para Pokémon GO — versão **0.0.10 (Scanner de contexto, captura ao vivo e detector V2)**.
+Central modular Android para Pokémon GO — versão **0.0.11 (Scanner de contexto, captura ao vivo e detector V2)**.
 
-## Funcional na 0.0.10
+## Funcional na 0.0.11
+
+- O scanner flutuante oferece agora **Automático** (varredura periódica) e **Por toque** (analisar uma única imagem ao pressionar **Escanear agora**). A opção manual evita OCR contínuo enquanto não houver solicitação.
 
 - Scanner direto da tela do Android, com consentimento por sessão via MediaProjection; bolha flutuante arrastável que pode ser fechada pelo usuário.
 - **Android 14 ou superior:** o seletor de captura oferece a opção de compartilhar somente o Pokémon GO (um app) ou toda a tela, conforme o sistema permitir. A 0.0.5/0.0.6 restringia indevidamente ao display inteiro.
@@ -32,6 +34,7 @@ python3 patches/scanner_v007.py
 python3 patches/scanner_v008.py
 python3 patches/scanner_v009.py
 python3 patches/scanner_v010.py
+python3 patches/scanner_v011.py
 bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
 ```
 
@@ -65,3 +68,6 @@ Ver `docs/AUDITORIA_REFERENCIAS_SCANNER_POKEDEX_2026-11-02.md` (somente fatos ob
 
 ## Classificador de contexto (SC-102)
 O código próprio ScreenContextClassifier.kt usa sinais visuais do detector V2 e textos de OCR, sem copiar o Poke Genie. O motor completo de Pokédex e rankings PvP ainda não foi implementado; não exibe cálculos inexistentes. Testes Kotlin com casos de avaliação, tela normal, golpes, raides e incerteza. Ver docs/SCANNER_CONTEXTO_SC102_2026-11-02.md.
+
+## Referência Calcy IV 3.5a
+O XAPK e as 37 capturas do Calcy IV foram inspecionados como referência para os modos de uso e a futura Pokédex. Banco proprietário, código DEX, modelos OCR e imagens externas NÃO são incluídos no PokeGoBR. Ver `docs/AUDITORIA_CALCY_IV_2026-11-02.md`. O simulador de fortalecimento, rankings PvP e dados offline são etapas futuras.
