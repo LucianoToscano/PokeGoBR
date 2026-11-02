@@ -1,0 +1,330 @@
+{
+  "schema": "pokegobr.references.v1",
+  "snapshot": "2026-11-01",
+  "records": [
+    {
+      "name": "API_PoGoCoordinates_spec_31-10-2026.diff",
+      "format": "DIFF",
+      "priority": "P0",
+      "area": "API"
+    },
+    {
+      "name": "pokesearch_api_app. (base de dados local)",
+      "format": "ZIP fonte",
+      "priority": "P1",
+      "area": "API"
+    },
+    {
+      "name": "pokesearch_api_app (variante PokéAPI A)",
+      "format": "ZIP fonte",
+      "priority": "P1",
+      "area": "Pokédex"
+    },
+    {
+      "name": "pokesearch_api_app (variante PokéAPI B)",
+      "format": "ZIP fonte",
+      "priority": "P2",
+      "area": "Pokédex"
+    },
+    {
+      "name": "API Autorizado Oficial pogocoordinates.md",
+      "format": "Markdown",
+      "priority": "P0",
+      "area": "API"
+    },
+    {
+      "name": "pokesearch_integracao_total (base)",
+      "format": "ZIP fonte",
+      "priority": "P0",
+      "area": "API"
+    },
+    {
+      "name": "API_PoGoCoordinates_spec.md",
+      "format": "Markdown",
+      "priority": "P0",
+      "area": "API"
+    },
+    {
+      "name": "pokemongohub_db_pwa (cópia A)",
+      "format": "ZIP assets",
+      "priority": "P3",
+      "area": "Pokédex"
+    },
+    {
+      "name": "pokemongohub_db_pwa (cópia B)",
+      "format": "ZIP assets",
+      "priority": "P3",
+      "area": "Pokédex"
+    },
+    {
+      "name": "pokesearch_integracao_total Master",
+      "format": "ZIP fonte",
+      "priority": "P0",
+      "area": "API"
+    },
+    {
+      "name": "INVENTARIO_MESTRE_TOTAL_POKEMON_GO_TODOS_PROJETOS_31-10-2026.md",
+      "format": "Markdown",
+      "priority": "P0",
+      "area": "Documentação"
+    },
+    {
+      "name": "PGSData 29_out.dat",
+      "format": "Java serializado",
+      "priority": "P1",
+      "area": "Coleção"
+    },
+    {
+      "name": "PGSData.dat",
+      "format": "Java serializado",
+      "priority": "P1",
+      "area": "Coleção"
+    },
+    {
+      "name": "Pokemon Coords_.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "PvPoke.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "PvP"
+    },
+    {
+      "name": "Velocity_v8_8_2.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "PGSStats.json",
+      "format": "JSON dados",
+      "priority": "P0",
+      "area": "Coleção"
+    },
+    {
+      "name": "pokelocation-v1.2-release.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "shungo1.7.2.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "pgsroot1.0.15_arm64.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "data-hub-2.5.3.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Raides"
+    },
+    {
+      "name": "calculadora_stardust_pokemon_go_V0.41.html",
+      "format": "HTML fonte",
+      "priority": "P0",
+      "area": "Calculadoras"
+    },
+    {
+      "name": "PvPPokeGo_0.5.41_FONTE_EDITAVEL_ORIGINAL.zip",
+      "format": "ZIP fonte",
+      "priority": "P0",
+      "area": "PvP"
+    },
+    {
+      "name": "Hoppa_Yveltal.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "Hoppa.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "PokeList.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Pokédex"
+    },
+    {
+      "name": "Hoopa Cris.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "EduHunter_Calculadora_COMPLETO_EDITAVEL_AUDITORIA_V0.41.zip",
+      "format": "ZIP fonte",
+      "priority": "P0",
+      "area": "Calculadoras"
+    },
+    {
+      "name": "test-pgtools-6.1.1.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "pgtools-6.1.1.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Hoopa 3.0.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "Hoppa 2.0.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "gpsjoystick_20260617153034.db",
+      "format": "DB",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "gpsjoystick_20250127152706.db",
+      "format": "DB",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "ipogo-launcher-26.1.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Pokecoord_1.2.4.xapk",
+      "format": "XAPK",
+      "priority": "P2",
+      "area": "Coordenadas"
+    },
+    {
+      "name": "Calcy IV_3.5a.xapk",
+      "format": "XAPK",
+      "priority": "P1",
+      "area": "Scanner"
+    },
+    {
+      "name": "Pokemod_Aegis_Public_v26073101.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Pokemod_Atlas_Public_v25101101.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Campfire_2026.38.1.xapk",
+      "format": "XAPK",
+      "priority": "P1",
+      "area": "Comunidade"
+    },
+    {
+      "name": "Pokemod-v14.0.0.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Projeto do Regibot_v2.3.3.0.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "regibot-2.4.8.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "PokeXperience_1.3.0.xapk",
+      "format": "XAPK",
+      "priority": "P2",
+      "area": "Comunidade"
+    },
+    {
+      "name": "Pokémon HOME_4.1.0.apk",
+      "format": "APK",
+      "priority": "P2",
+      "area": "Coleção"
+    },
+    {
+      "name": "Poke Genie Remote Raid IV PvP.apk",
+      "format": "APK",
+      "priority": "P1",
+      "area": "Scanner"
+    },
+    {
+      "name": "PokeRaid_0.49.xapk",
+      "format": "XAPK",
+      "priority": "P2",
+      "area": "Raides"
+    },
+    {
+      "name": "PvPPokeGo_0.5.41_COMPLETO_EDITAVEL_AUDITORIA_RECRIACAO.zip",
+      "format": "ZIP fonte + histórico",
+      "priority": "P0",
+      "area": "PvP"
+    },
+    {
+      "name": "ipogo-4.5.6.ipa",
+      "format": "IPA iOS",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "ipogo-26.1.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "Pokebattler Raid Party_2.4.8.xapk",
+      "format": "XAPK",
+      "priority": "P1",
+      "area": "Raides"
+    },
+    {
+      "name": "Pokémon GO_0.433.1 PGSharp.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "pgs1.276.2_0.435.1_arm64.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    },
+    {
+      "name": "pgs1.276.2_0.435.1_arm64m.apk",
+      "format": "APK",
+      "priority": "P3",
+      "area": "Referência externa"
+    }
+  ]
+}
