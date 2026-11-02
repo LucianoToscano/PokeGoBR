@@ -48,7 +48,8 @@ internal object HubData {
         DexSpecies(7, "Squirtle"), DexSpecies(25, "Pikachu"),
         DexSpecies(92, "Gastly"), DexSpecies(93, "Haunter"),
         DexSpecies(94, "Gengar"), DexSpecies(149, "Dragonite"),
-        DexSpecies(150, "Mewtwo"), DexSpecies(658, "Greninja"),
+        DexSpecies(150, "Mewtwo"), DexSpecies(656, "Froakie"),
+        DexSpecies(657, "Frogadier"), DexSpecies(658, "Greninja"),
         DexSpecies(888, "Zacian"), DexSpecies(890, "Eternatus"),
         DexSpecies(1025, "Pecharunt")
     )
