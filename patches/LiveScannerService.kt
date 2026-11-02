@@ -45,6 +45,7 @@ class LiveScannerService : Service() {
     private var captureWidth = 0
     private var captureHeight = 0
     private var framesSeen = 0
+    private val scanGate = FrameScanGate()
     private val busy = AtomicBoolean(false)
     private val main = Handler(Looper.getMainLooper())
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -144,8 +145,11 @@ class LiveScannerService : Service() {
             val image = runCatching { source.acquireLatestImage() }.getOrNull()
                 ?: return@setOnImageAvailableListener
             try {
-                if (stopped || System.currentTimeMillis() - lastFrame < 1700L ||
-                    !busy.compareAndSet(false, true)) return@setOnImageAvailableListener
+                if (stopped || !busy.compareAndSet(false, true)) return@setOnImageAvailableListener
+                if (!scanGate.shouldProcess(SystemClock.elapsedRealtime())) {
+                    busy.set(false)
+                    return@setOnImageAvailableListener
+                }
                 lastFrame = System.currentTimeMillis()
                 framesSeen++
                 if (framesSeen == 1) {
@@ -303,6 +307,48 @@ class LiveScannerService : Service() {
             textSize = 12f; setTextColor(Color.rgb(230, 249, 255))
         }
         details.addView(textView)
+
+        val scanModeRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(8), 0, dp(4))
+        }
+        val autoMode = TextView(this).apply {
+            text = "↻  Automático"
+            textSize = 12f
+            setTextColor(Color.rgb(160, 232, 228))
+            setPadding(dp(5), dp(6), dp(12), dp(6))
+            setOnClickListener {
+                scanGate.setAutomatic(true)
+                updateStatus("◉ Modo automático",
+                    "Captura a cada ~1,7s. Abra a avaliação do Pokémon.")
+            }
+        }
+        val tapMode = TextView(this).apply {
+            text = "◎  Por toque"
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            setPadding(dp(5), dp(6), dp(5), dp(6))
+            setOnClickListener {
+                scanGate.setAutomatic(false)
+                updateStatus("◉ Modo por toque",
+                    "Toque em Escanear agora para analisar um quadro da tela.")
+            }
+        }
+        scanModeRow.addView(autoMode)
+        scanModeRow.addView(tapMode)
+        details.addView(scanModeRow)
+        val scanNow = TextView(this).apply {
+            text = "◉  Escanear agora"
+            textSize = 13f
+            setTextColor(Color.rgb(156, 232, 226))
+            setPadding(0, dp(6), 0, dp(6))
+            setOnClickListener {
+                scanGate.requestScan()
+                updateStatus("◉ Escaneando",
+                    "Aguardando o próximo quadro da tela compartilhada.")
+            }
+        }
+        details.addView(scanNow)
         val stop = TextView(this).apply {
             text = "■  Parar scanner"; textSize = 12f; setTextColor(Color.rgb(255, 180, 180))
             setPadding(0, dp(8), 0, 0)
