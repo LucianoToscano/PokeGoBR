@@ -32,7 +32,9 @@ jobs:
           ARCHIVE=source/PokeGoBR-v0.0.2-SCANNER-FONTE.zip
           test -s "$ARCHIVE"
           unzip -t "$ARCHIVE" | tail -n 2
+          cp README.md /tmp/pokegobr-current-readme.md
           unzip -oq "$ARCHIVE" -d .
+          cp /tmp/pokegobr-current-readme.md README.md
           test -f settings.gradle.kts -o -f settings.gradle
           test -f gradlew
           test -d app/src/main
