@@ -17,13 +17,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Prepare preinstalled Android SDK
+      - name: Install Android SDK 35
         shell: bash
         run: |
-          echo "ANDROID_HOME=${ANDROID_HOME}"
-          command -v sdkmanager
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+          echo "Android SDK: ${ANDROID_HOME}"
+          find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f
+          SDK_MANAGER="$(find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          test -n "$SDK_MANAGER"
+          yes | "$SDK_MANAGER" --licenses >/dev/null || true
+          "$SDK_MANAGER" --install "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
       - name: Assemble Android debug APK
         run: bash ./gradlew --no-daemon :app:assembleDebug
