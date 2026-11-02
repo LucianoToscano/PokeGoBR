@@ -97,44 +97,116 @@ class LiveScannerService : Service() {
         return START_NOT_STICKY
     }
 
+    private fun updateStatus(title: String, message: String? = null) {
+        main.post {
+            if (stopped) return@post
+            bubbleTitle?.text = title
+            if (message != null) textView?.text = message
+        }
+    }
+
+    private fun initialSize(): Pair<Int, Int> {
+        if (Build.VERSION.SDK_INT >= 30) {
+            val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+            val bounds = wm.maximumWindowMetrics.bounds
+            return Pair(bounds.width().coerceAtLeast(1), bounds.height().coerceAtLeast(1))
+        }
+        @Suppress("DEPRECATION")
+        val metrics = android.util.DisplayMetrics()
+        @Suppress("DEPRECATION")
+        (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.getRealMetrics(metrics)
+        return Pair(metrics.widthPixels.coerceAtLeast(1), metrics.heightPixels.coerceAtLeast(1))
+    }
+
     private fun startCapture() {
-        val dm = resources.displayMetrics
-        val w = dm.widthPixels; val h = dm.heightPixels
-        if (w <= 0 || h <= 0) error("Tamanho de tela inválido")
+        val (width, height) = initialSize()
+        if (width < 100 || height < 100) throw IllegalStateException("Resolução inválida")
         val thread = HandlerThread("PokeGoBR-local-scanner")
-        thread.start(); captureThread = thread
+        thread.start()
+        captureThread = thread
         val handler = Handler(thread.looper)
-        val reader = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
+        captureWorker = handler
+        val reader = makeReader(width, height, handler)
         imageReader = reader
-        reader.setOnImageAvailableListener({ source ->
-            val image = runCatching { source.acquireLatestImage() }.getOrNull() ?: return@setOnImageAvailableListener
-            try {
-                if (System.currentTimeMillis() - lastFrame < 2000L || !busy.compareAndSet(false, true))
-                    return@setOnImageAvailableListener
-                lastFrame = System.currentTimeMillis()
-                val plane = image.planes.firstOrNull()
-                if (plane == null || plane.pixelStride != 4) { busy.set(false); return@setOnImageAvailableListener }
-                val paddedWidth = plane.rowStride / plane.pixelStride
-                if (paddedWidth < w) { busy.set(false); return@setOnImageAvailableListener }
-                val padded = Bitmap.createBitmap(paddedWidth, h, Bitmap.Config.ARGB_8888)
-                plane.buffer.rewind()
-                padded.copyPixelsFromBuffer(plane.buffer)
-                val cropped = Bitmap.createBitmap(padded, 0, 0, w, h)
-                padded.recycle()
-                val scale = minOf(1f, 1050f / max(w, h))
-                val bitmap = if (scale < 1f) {
-                    val resized = Bitmap.createScaledBitmap(cropped, (w * scale).roundToInt().coerceAtLeast(1), (h * scale).roundToInt().coerceAtLeast(1), true)
-                    cropped.recycle(); resized
-                } else cropped
-                analyze(bitmap)
-            } catch (_: Exception) {
-                busy.set(false)
-            } finally { image.close() }
-        }, handler)
+        captureWidth = width
+        captureHeight = height
         virtualDisplay = projection!!.createVirtualDisplay(
-            "PokeGoBR-visual", w, h, dm.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            "PokeGoBR-visual", width, height, resources.configuration.densityDpi,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
             reader.surface, null, handler
         )
+        updateStatus("◉ Captura iniciada", "Aguardando imagem. Abra a avaliação do Pokémon no app compartilhado.")
+    }
+
+    private fun makeReader(width: Int, height: Int, handler: Handler): ImageReader {
+        val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+        reader.setOnImageAvailableListener({ source ->
+            val image = runCatching { source.acquireLatestImage() }.getOrNull()
+                ?: return@setOnImageAvailableListener
+            try {
+                if (stopped || System.currentTimeMillis() - lastFrame < 1700L ||
+                    !busy.compareAndSet(false, true)) return@setOnImageAvailableListener
+                lastFrame = System.currentTimeMillis()
+                framesSeen++
+                if (framesSeen == 1) {
+                    updateStatus("◉ Captura funcionando", "Primeiro quadro recebido. Abra a avaliação do Pokémon.")
+                }
+                val plane = image.planes.firstOrNull()
+                    ?: throw IllegalStateException("Quadro sem plano de pixels")
+                if (plane.pixelStride != 4) throw IllegalStateException("Formato de pixel não suportado")
+                val paddedWidth = plane.rowStride / plane.pixelStride
+                if (paddedWidth < width) throw IllegalStateException("Stride inválido")
+                val padded = Bitmap.createBitmap(paddedWidth, height, Bitmap.Config.ARGB_8888)
+                plane.buffer.rewind()
+                padded.copyPixelsFromBuffer(plane.buffer)
+                // With zero padding the crop is the same Bitmap. Never recycle it prematurely.
+                val cropped = if (paddedWidth == width) padded else
+                    Bitmap.createBitmap(padded, 0, 0, width, height)
+                if (cropped !== padded) padded.recycle()
+                val scale = minOf(1f, 1250f / max(width, height))
+                val bitmap = if (scale < 1f) {
+                    val small = Bitmap.createScaledBitmap(
+                        cropped, (width * scale).roundToInt().coerceAtLeast(1),
+                        (height * scale).roundToInt().coerceAtLeast(1), true
+                    )
+                    if (small !== cropped) cropped.recycle()
+                    small
+                } else cropped
+                analyze(bitmap)
+            } catch (error: Exception) {
+                busy.set(false)
+                Log.e("PokeGoBR-Scanner", "Falha ao ler quadro", error)
+                updateStatus("⚠ Erro no quadro", "Erro de leitura (" + error.javaClass.simpleName + "). Reinicie o scanner.")
+            } finally {
+                image.close()
+            }
+        }, handler)
+        return reader
+    }
+
+    /** Resize one VirtualDisplay and its surface; do not consume the projection token twice. */
+    private fun resizeCapture(width: Int, height: Int) {
+        if (width < 100 || height < 100 || stopped) return
+        captureWorker?.post {
+            if (stopped || (width == captureWidth && height == captureHeight)) return@post
+            val display = virtualDisplay ?: return@post
+            try {
+                val worker = captureWorker ?: return@post
+                val reader = makeReader(width, height, worker)
+                display.resize(width, height, resources.configuration.densityDpi)
+                display.setSurface(reader.surface)
+                val old = imageReader
+                imageReader = reader
+                captureWidth = width
+                captureHeight = height
+                old?.setOnImageAvailableListener(null, null)
+                old?.close()
+                updateStatus("◉ Área ajustada", "Capturando " + width + " × " + height + " pixels. Abra a avaliação.")
+            } catch (error: Exception) {
+                Log.e("PokeGoBR-Scanner", "Falha ao redimensionar", error)
+                updateStatus("⚠ Área de captura", "Não foi possível ajustar. Pare e inicie uma nova captura.")
+            }
+        }
     }
 
     private fun analyze(bitmap: Bitmap) {
@@ -145,9 +217,15 @@ class LiveScannerService : Service() {
                     val fields = ScreenshotParser.parse(detected.text)
                     val iv = bars.proposedIvs?.joinToString("/") ?: "indefinido"
                     val summary = "${fields.candidateName ?: "Pokémon"} · PC ${fields.cp ?: "—"} · PS ${fields.hp ?: "—"}\nIV A/D/PS: $iv ${if (bars.proposedIvs != null) "(estimativa)" else "(conferir)"}"
-                    main.post { textView?.text = summary }
+                    if (fields.cp == null && fields.hp == null && bars.barRowsFound == 0) {
+                        updateStatus("◉ Captura funcionando", "Imagem recebida. Abra o Pokémon e toque em Avaliar.")
+                    } else {
+                        updateStatus("◉ Pokémon analisado", summary)
+                    }
                 }
-                .addOnFailureListener { main.post { textView?.text = "Não foi possível ler esta tela." } }
+                .addOnFailureListener {
+                    updateStatus("⚠ OCR indisponível", "Não foi possível reconhecer texto nesta captura.")
+                }
                 .addOnCompleteListener { bitmap.recycle(); busy.set(false) }
         } catch (_: Exception) { bitmap.recycle(); busy.set(false) }
     }
