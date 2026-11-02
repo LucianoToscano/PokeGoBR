@@ -12,6 +12,7 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.*
 import android.provider.Settings
+import android.util.Log
 import android.view.*
 import android.widget.*
 import com.google.mlkit.vision.common.InputImage
@@ -39,6 +40,11 @@ class LiveScannerService : Service() {
     private var overlayParams: WindowManager.LayoutParams? = null
     private var manager: WindowManager? = null
     private var textView: TextView? = null
+    private var bubbleTitle: TextView? = null
+    private var captureWorker: Handler? = null
+    private var captureWidth = 0
+    private var captureHeight = 0
+    private var framesSeen = 0
     private val busy = AtomicBoolean(false)
     private val main = Handler(Looper.getMainLooper())
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -73,10 +79,21 @@ class LiveScannerService : Service() {
             projection = projectionManager.getMediaProjection(code, data) ?: error("Consentimento inválido")
             projection!!.registerCallback(object : MediaProjection.Callback() {
                 override fun onStop() { main.post { stopSelf() } }
+                override fun onCapturedContentResize(width: Int, height: Int) {
+                    resizeCapture(width, height)
+                }
+                override fun onCapturedContentVisibilityChanged(isVisible: Boolean) {
+                    if (!isVisible) updateStatus("◉ Scanner pausado", "Abra o app compartilhado para continuar a leitura.")
+                    else updateStatus("◉ Scanner ativo", "Tela compartilhada visível. Abra a avaliação do Pokémon.")
+                }
             }, main)
-            startCapture()
             showBubble()
-        } catch (_: Exception) { stopSelf() }
+            startCapture()
+        } catch (error: Exception) {
+            Log.e("PokeGoBR-Scanner", "Não foi possível iniciar a projeção", error)
+            Toast.makeText(this, "Scanner: falha ao iniciar (" + error.javaClass.simpleName + ")", Toast.LENGTH_LONG).show()
+            stopSelf()
+        }
         return START_NOT_STICKY
     }
 
@@ -148,12 +165,13 @@ class LiveScannerService : Service() {
             }
         }
         val handle = TextView(this).apply {
-            text = "◉  Scanner IV"; textSize = 13f; setTextColor(Color.WHITE)
+            text = "◉  Iniciando captura"; textSize = 13f; setTextColor(Color.WHITE)
             setPadding(dp(11), dp(9), dp(11), dp(9))
         }
+        bubbleTitle = handle
         root.addView(handle)
         val details = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; visibility = View.GONE
+            orientation = LinearLayout.VERTICAL; visibility = View.VISIBLE
             setPadding(dp(10), 0, dp(10), dp(9))
         }
         textView = TextView(this).apply {
@@ -199,7 +217,12 @@ class LiveScannerService : Service() {
                 return true
             }
         })
-        runCatching { manager?.addView(root, params); overlay = root }
+        try {
+            manager?.addView(root, params)
+            overlay = root
+        } catch (error: Exception) {
+            throw IllegalStateException("Não foi possível abrir bolha flutuante", error)
+        }
     }
 
     override fun onDestroy() {
@@ -211,6 +234,9 @@ class LiveScannerService : Service() {
         runCatching { imageReader?.close() }; imageReader = null
         runCatching { projection?.stop() }; projection = null
         runCatching { captureThread?.quitSafely() }
+        captureWorker = null
+        bubbleTitle = null
+        textView = null
         runCatching { recognizer.close() }
         super.onDestroy()
     }
