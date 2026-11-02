@@ -2,7 +2,7 @@
 
 ## Materiais recebidos
 - `PokeRaid_0.49 ... .xapk` (135.409.806 bytes), composto por quatro APKs: `me.pokeraid.apk`, `config.arm64_v8a.apk`, `config.pt.apk` e `config.xxhdpi.apk`. Pacote `me.pokeraid`, versão 0.49, `versionCode` 166, `minSdkVersion` 32 e `targetSdkVersion` 36 no manifesto XAPK.
-- `PokeRaid.zip`: **25 screenshots** (18 screenshots nomeados Pokémon GO, 6 nomeados PokeRaid e 1 nomeado One UI Home). O arquivo ZIP não inclui código-fonte.
+- `PokeRaid.zip`: **25 screenshots** (17 screenshots nomeados Pokémon GO, 7 nomeados PokeRaid e 1 nomeado One UI Home). O arquivo ZIP não inclui código-fonte.
 - A inspeção técnica foi **estática**. A permissão do usuário para estudar o material não significa que qualquer algoritmo proprietário tenha sido licenciado para redistribuição. Não copiamos DEX, SQLite, modelos ML Kit, imagens nem outros ativos do PokeRaid.
 
 ## Evidências observadas
