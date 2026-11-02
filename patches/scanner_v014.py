@@ -18,7 +18,7 @@ def exactly_once(text: str, before: str, after: str, description: str) -> str:
     return text.replace(before, after, 1)
 
 for source, destination in [
-    ("LiveScannerService.kt", target / "LiveScannerService.kt"),
+    ("LiveScannerServiceV14.kt", target / "LiveScannerService.kt"),
     ("ScannerReadoutParser.kt", target / "ScannerReadoutParser.kt"),
     ("ScannerReadoutParserTest.kt",
      root / "app/src/test/java/br/com/pokegobr/ScannerReadoutParserTest.kt"),
