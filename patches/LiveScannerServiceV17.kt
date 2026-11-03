@@ -254,44 +254,61 @@ class LiveScannerService : Service() {
                             val iv = bars.proposedIvs
                             val compactIv = iv?.let { ScannerReadoutParser.tentativeIvLabel(it) }
                             if (compactIv != null && iv != null) {
-                                val result = LiveIvResult(
-                                    species = safeName,
-                                    cp = cp,
-                                    hp = hp,
-                                    iv = iv,
-                                    pvpFromImports = findImportedRanks(safeName, iv)
+                                val oneShot = manualRequest
+                                manualRequest = false
+                                val readiness = ivConsensus.observe(
+                                    safeName, cp, iv, SystemClock.elapsedRealtime(),
+                                    scanGate.isAutomatic() && !oneShot
                                 )
-                                // A successful reading is held still until the user asks
-                                // for a fresh scan. No repeated overlay contamination.
-                                resumeAutomaticAfterMenu = scanGate.isAutomatic()
-                                scanGate.setAutomatic(false)
-                                updateStatus("◉ IV ≈" + result.ivPercent + "%",
-                                    brief + "\n" + compactIv +
-                                        "\nResultado experimental; toque para detalhes.")
-                                main.post {
-                                    if (!stopped) runCatching {
-                                        resultCard?.show(result)
-                                    }.onFailure { Log.e("PokeGoBR-Scanner", "Card de resultado", it) }
+                                if (readiness is IvReadiness.Waiting) {
+                                    updateStatus("◉ Conferindo IV " +
+                                        readiness.count + "/" + readiness.needed,
+                                        brief + "\nAguardando outra leitura igual.")
+                                } else {
+                                    val result = LiveIvResult(
+                                        species = safeName,
+                                        cp = cp,
+                                        hp = hp,
+                                        iv = iv,
+                                        pvpFromImports = findImportedRanks(safeName, iv)
+                                    )
+                                    // A successful reading is held still until the user asks
+                                    // for a fresh scan. No repeated overlay contamination.
+                                    resumeAutomaticAfterMenu = scanGate.isAutomatic()
+                                    scanGate.setAutomatic(false)
+                                    updateStatus("◉ IV ≈" + result.ivPercent + "%",
+                                        brief + "\n" + compactIv +
+                                            "\nResultado experimental; toque para detalhes.")
+                                    main.post {
+                                        if (!stopped) runCatching {
+                                            resultCard?.show(result)
+                                        }.onFailure { Log.e("PokeGoBR-Scanner", "Card de resultado", it) }
+                                    }
                                 }
                             } else {
+                                ivConsensus.reset()
                                 updateStatus("◉ IV não confirmado",
                                     brief + "\nBarras incompletas. Reposicione e escaneie novamente.")
                             }
                         }
                         ScanScene.DETAILS -> {
+                            ivConsensus.reset()
                             updateStatus("◉ " + (safeName ?: "Pokémon") +
                                 (cp?.let { " · PC $it" } ?: ""),
                                 brief + "\nAbra Avaliar para conferir os IVs.")
                         }
                         ScanScene.MOVES -> {
+                            ivConsensus.reset()
                             updateStatus("◉ Golpes", "Leitura detalhada dos golpes ainda em desenvolvimento.")
                         }
                         ScanScene.RAID -> {
+                            ivConsensus.reset()
                             val raidInfo = RaidScreenParser.parse(detected.text)
                             updateStatus("◉ Raide", if (raidInfo.recognized)
                                 raidInfo.display() else "Raide possivelmente detectada; dados inconclusivos.")
                         }
                         ScanScene.OTHER -> {
+                            ivConsensus.reset()
                             updateStatus("◉ Scanner ativo",
                                 "Abra um Pokémon e toque em Avaliar. Nenhum IV foi confirmado.")
                         }
@@ -356,15 +373,18 @@ class LiveScannerService : Service() {
                 .put("cp", result.cp.toString())
                 .put("hp", result.hp?.toString() ?: "—")
                 .put("iv", result.iv.joinToString("/"))
-                .put("origin", "scanner_estimate")
-                .put("confirmed", false)
+                .put("origin", if (result.userConfirmed) "scanner_user_reviewed" else "scanner_estimate")
+                .put("confirmed", result.userConfirmed)
+                .put("manuallyEdited", result.manuallyEdited)
                 .put("createdAt", System.currentTimeMillis())
         )
         for (i in 0 until minOf(99, earlier.length())) {
             earlier.optJSONObject(i)?.let { updated.put(it) }
         }
         prefs.edit().putString("items", updated.toString()).apply()
-        Toast.makeText(this, "Estimativa salva em Meus Pokémon", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this,
+            if (result.userConfirmed) "IVs conferidos salvos em Meus Pokémon"
+            else "Estimativa salva em Meus Pokémon", Toast.LENGTH_SHORT).show()
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).roundToInt()
@@ -407,6 +427,7 @@ class LiveScannerService : Service() {
             setPadding(dp(5), dp(6), dp(12), dp(6))
             setOnClickListener {
                 resumeAutomaticAfterMenu = true
+                ivConsensus.reset()
                 updateStatus("◉ Automático",
                     "Modo automático selecionado. Feche este painel para retomar a leitura.")
             }
@@ -418,6 +439,7 @@ class LiveScannerService : Service() {
             setPadding(dp(5), dp(6), dp(5), dp(6))
             setOnClickListener {
                 resumeAutomaticAfterMenu = false
+                ivConsensus.reset()
                 scanGate.setAutomatic(false)
                 updateStatus("◉ Por toque",
                     "Toque em Escanear agora para analisar um quadro da tela.")
@@ -436,6 +458,8 @@ class LiveScannerService : Service() {
                 // contamination from our own expanded overlay.
                 details.visibility = View.GONE
                 scanGate.setAutomatic(resumeAutomaticAfterMenu)
+                manualRequest = true
+                ivConsensus.reset()
                 scanGate.requestScan()
                 updateStatus("◉ Escaneando",
                     "Aguardando quadro do Pokémon, sem o painel de controles aberto.")
@@ -451,6 +475,8 @@ class LiveScannerService : Service() {
         resultCard = LiveIvResultCard(this, manager!!,
             onRescan = {
                 resultCard?.hide()
+                ivConsensus.reset()
+                manualRequest = true
                 scanGate.setAutomatic(resumeAutomaticAfterMenu)
                 scanGate.requestScan()
                 updateStatus("◉ Escaneando", "Abra a avaliação com as três barras visíveis.")
