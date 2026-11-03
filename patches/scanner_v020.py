@@ -88,6 +88,6 @@ if "HubImportV15.readAll(context, uri)" not in history:
     raise RuntimeError("Legacy imports must remain available")
 if "PokemonHeaderParser.parse" not in service.read_text(encoding="utf-8"):
     raise RuntimeError("Scanner v018 must remain intact")
-if "GoDexLinks.home" not in hub:
+if "GoDexLinks.home" not in hub.read_text(encoding="utf-8"):
     raise RuntimeError("GoDex module v019 must remain intact")
 print("0.0.20: Poke Genie-style history, 7 filters, 7 sorts, details, review, CSV, opt-in photos.")
