@@ -255,7 +255,8 @@ internal fun ScanHistoryScreen(
                         selectedKey = null; selectedBucket = null; reload++
                     }
                 },
-                onDelete = { confirmDelete = selection }
+                onDelete = { confirmDelete = selection },
+                modifier = Modifier.weight(1f)
             )
         } else {
             GlassArea(Modifier.fillMaxWidth()) {
@@ -355,7 +356,7 @@ internal fun ScanHistoryScreen(
 private fun ScanHistoryDetails(
     entry: SavedScan, onBack: () -> Unit, onPhoto: () -> Unit,
     onEdit: (List<Int>, Boolean) -> Unit, onCopy: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit, modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var attributes by remember(entry.key, entry.signature) {
@@ -378,8 +379,7 @@ private fun ScanHistoryDetails(
             }.getOrNull()
         }
     }
-    Column(Modifier.fillMaxWidth().weight(1f)
-        .verticalScroll(rememberScrollState()),
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(9.dp)) {
         GlassArea(Modifier.fillMaxWidth()) {
             TextButton(onClick = onBack) { Text("‹ Voltar ao histórico") }
