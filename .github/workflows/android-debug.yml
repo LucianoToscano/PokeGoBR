@@ -73,7 +73,7 @@ jobs:
           grep -F 'resultCard?.show(result)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/main/java/br/com/pokegobr/LiveIvResultCard.kt
           test -f app/src/test/java/br/com/pokegobr/LiveIvResultTest.kt
-          grep -F 'SpatialSpeciesResolver.resolve(spatialLines, speciesNames)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
+          grep -F 'SpatialSpeciesResolver.resolve(lines, speciesNames)' app/src/main/java/br/com/pokegobr/PokemonHeaderParser.kt
           grep -F 'ivConsensus.observe(' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           grep -F 'private fun adjustIv(index: Int, delta: Int)' app/src/main/java/br/com/pokegobr/LiveIvResultCard.kt
           test -f app/src/test/java/br/com/pokegobr/IvScanConsensusTest.kt
@@ -84,7 +84,7 @@ jobs:
           grep -F 'HubImportV15.readAll(context, uri)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           grep -F 'RaidScreenParser.parse(detected.text)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/RaidScreenParserTest.kt
-          grep -F 'scanGate.shouldProcess(SystemClock.elapsedRealtime())' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
+          grep -F 'scanGate.shouldProcess(frameAt)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/FrameScanGateTest.kt
           grep -F 'ScreenContextClassifier.classify(' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/ScreenContextClassifierTest.kt
