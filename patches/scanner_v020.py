@@ -86,7 +86,7 @@ for required in (
         raise RuntimeError(f"History UI incomplete: {required}")
 if "HubImportV15.readAll(context, uri)" not in history:
     raise RuntimeError("Legacy imports must remain available")
-if "PokemonHeaderParser.parse" not in service:
+if "PokemonHeaderParser.parse" not in service.read_text(encoding="utf-8"):
     raise RuntimeError("Scanner v018 must remain intact")
 if "GoDexLinks.home" not in hub:
     raise RuntimeError("GoDex module v019 must remain intact")
