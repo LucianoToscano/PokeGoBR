@@ -55,13 +55,14 @@ jobs:
           python3 patches/scanner_v017.py
           python3 patches/scanner_v018.py
           python3 patches/scanner_v019.py
+          python3 patches/scanner_v020.py
           # O seletor deve manter a escolha do app ou da tela inteira.
           grep -F 'val request = projectionManager.createScreenCaptureIntent()' app/src/main/java/br/com/pokegobr/MainActivity.kt
           if grep -F 'MediaProjectionConfig.createConfigForDefaultDisplay()' app/src/main/java/br/com/pokegobr/MainActivity.kt; then
             echo 'ERRO: captura restrita a tela inteira' >&2
             exit 1
           fi
-          grep -F 'versionName = "0.0.19"' app/build.gradle.kts
+          grep -F 'versionName = "0.0.20"' app/build.gradle.kts
           grep -F 'UnifiedModuleScreen(' app/src/main/java/br/com/pokegobr/MainActivity.kt
           grep -F 'HubImportV15.readAll(context, uri)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           test -f app/src/main/assets/pokegobr_reference_catalog.json
@@ -85,6 +86,10 @@ jobs:
           grep -F '"GoDex" -> HubGoDex()' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           grep -F 'GoDexLinks.validPublicCollection(collectionUrl)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           test -f app/src/test/java/br/com/pokegobr/GoDexLinksTest.kt
+          grep -F 'ScanHistoryScreen(onNavigate = onNavigate, modifier = modifier)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
+          grep -F 'ScannerHistory' app/src/main/java/br/com/pokegobr/ScanHistoryScreen.kt || test -f app/src/main/java/br/com/pokegobr/ScanHistoryScreen.kt
+          test -f app/src/main/java/br/com/pokegobr/ScanPhotoStore.kt
+          test -f app/src/test/java/br/com/pokegobr/ScanHistoryStoreTest.kt
           grep -F 'HubImportV15.readAll(context, uri)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           grep -F 'RaidScreenParser.parse(detected.text)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/RaidScreenParserTest.kt
@@ -108,17 +113,19 @@ jobs:
           test -f patches/scanner_v017.py
           test -f patches/scanner_v018.py
           test -f patches/scanner_v019.py
+          test -f patches/scanner_v020.py
+          test -f docs/HISTORICO_SCANNER_POKEGENIE_v020_2026-11-03.md
           test -f docs/INTEGRACAO_GODEX_V019_2026-11-03.md
           test -f docs/SCANNER_TREECKO_OVERLAY_V018.md
           test -f docs/SCANNER_ESTABILIDADE_REVISAO_V017.md
           test -f docs/SCANNER_CARD_POKEGOBR_V016.md
           test -f docs/IMPORTADORES_EXPORTACOES_v015_2026-11-02.md
-          zip -qr dist/PokeGoBR-v0.0.19-FONTE-EDITAVEL.zip app/src app/build.gradle.kts app/src/main/AndroidManifest.xml build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md source patches docs .github/workflows/android-debug.yml
-      - name: Fonte editavel 0.0.19 corrigida
+          zip -qr dist/PokeGoBR-v0.0.20-FONTE-EDITAVEL.zip app/src app/build.gradle.kts app/src/main/AndroidManifest.xml build.gradle.kts gradlew gradle settings.gradle.kts gradle.properties README.md source patches docs .github/workflows/android-debug.yml
+      - name: Fonte editavel 0.0.20 corrigida
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.19-scanner-fonte
-          path: dist/PokeGoBR-v0.0.19-FONTE-EDITAVEL.zip
+          name: PokeGoBR-v0.0.20-scanner-fonte
+          path: dist/PokeGoBR-v0.0.20-FONTE-EDITAVEL.zip
           if-no-files-found: error
           retention-days: 30
       - name: Testar detector V2 (fixtures sintéticas)
@@ -147,12 +154,12 @@ jobs:
           bash ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
           test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.19-scanner-alpha.apk
-          sha256sum dist/PokeGoBR-v0.0.19-scanner-alpha.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PokeGoBR-v0.0.20-scanner-alpha.apk
+          sha256sum dist/PokeGoBR-v0.0.20-scanner-alpha.apk > dist/SHA256SUMS.txt
       - name: Disponibilizar APK nos artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: PokeGoBR-v0.0.19-scanner-debug
+          name: PokeGoBR-v0.0.20-scanner-debug
           path: dist/
           if-no-files-found: error
           retention-days: 30
@@ -163,8 +170,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v0.0.19-scanner-alpha-build${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/PokeGoBR-v0.0.19-scanner-alpha.apk dist/PokeGoBR-v0.0.19-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
-            --title "PokeGoBR 0.0.19 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
-            --notes "APK debug de testes. Alfa 0.0.19: GoDex integrado à Pokédex, Meus Pokémon e Extras via navegação HTTPS externa com links para coleções, ShinyDex e MaxDex. Links públicos de coleções são validados. Sem login ou sincronização de contas no APK. Mantém scanner v018, importações privadas e raides. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
+          TAG="v0.0.20-scanner-alpha-build${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/PokeGoBR-v0.0.20-scanner-alpha.apk dist/PokeGoBR-v0.0.20-FONTE-EDITAVEL.zip dist/SHA256SUMS.txt \
+            --title "PokeGoBR 0.0.20 · Scanner alfa (build ${GITHUB_RUN_NUMBER})" \
+            --notes "APK debug de testes. Alfa 0.0.20: Meus Pokémon com histórico de scans em lista compacta e círculo de IV, busca/filtros/ordenação, detalhes, revisão manual, registros Poke Genie/Calcy/PGS separados, exclusão, exportação CSV e anexo voluntário de captura privada. Mantém scanner 0.0.18, GoDex, importação e raides. Não é versão de produção. O app requer validação em dispositivo real; a assinatura debug pode variar entre compilações." \
             --prerelease --latest=false --target "${GITHUB_SHA}"
