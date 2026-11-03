@@ -168,6 +168,19 @@ class LiveScannerService : Service() {
                         overlay?.visibility = View.INVISIBLE
                         resultCard?.hide()
                     }
+                    // Capture may stall if the user shares only one paused app.
+                    // Restore the control in that case rather than hiding it forever.
+                    main.postDelayed({
+                        captureWorker?.post {
+                            if (pendingCleanCapture &&
+                                SystemClock.elapsedRealtime() - overlayHideRequestedAt >= 1400L) {
+                                pendingCleanCapture = false
+                                main.post {
+                                    if (!stopped) overlay?.visibility = View.VISIBLE
+                                }
+                            }
+                        }
+                    }, 1550L)
                     return@setOnImageAvailableListener
                 }
                 if (frameAt < overlayHideRequestedAt ||
