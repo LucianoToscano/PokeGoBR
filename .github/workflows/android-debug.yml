@@ -65,7 +65,7 @@ jobs:
           grep -F 'HubImportV15.readAll(context, uri)' app/src/main/java/br/com/pokegobr/UnifiedHub.kt
           test -f app/src/main/assets/pokegobr_reference_catalog.json
           test -f app/src/test/java/br/com/pokegobr/UnifiedHubTest.kt
-          grep -F 'ScannerReadoutParser.parse(detected.text, speciesNames)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
+          grep -F 'PokemonHeaderParser.parse(spatialLines, speciesNames)' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           grep -F 'orientation = LinearLayout.VERTICAL; visibility = View.GONE' app/src/main/java/br/com/pokegobr/LiveScannerService.kt
           test -f app/src/test/java/br/com/pokegobr/ScannerReadoutParserTest.kt
           test -f app/src/main/java/br/com/pokegobr/HubImportV15.kt
