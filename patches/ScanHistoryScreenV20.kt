@@ -135,6 +135,20 @@ private fun ScanRow(entry: SavedScan, onOpen: () -> Unit) {
 internal fun ScanHistoryScreen(
     onNavigate: (Int) -> Unit, modifier: Modifier = Modifier
 ) {
+    MaterialTheme(colorScheme = lightColorScheme(
+        primary = historyAccent,
+        onSurface = historyInk,
+        surface = historyPanel,
+        background = Color(0xFFF5F8F6)
+    )) {
+        ScanHistoryContent(onNavigate, modifier)
+    }
+}
+
+@Composable
+private fun ScanHistoryContent(
+    onNavigate: (Int) -> Unit, modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var reload by remember { mutableIntStateOf(0) }
@@ -403,14 +417,14 @@ private fun ScanHistoryDetails(
                 IvRing(entry.percent, 60.dp)
             }
             HorizontalDivider(color = historyOutline)
-            Text("IV geral · " + (entry.percent?.toString() ?: "—") + "% · " +
+            Text("IV geral · " + (if (entry.iv == null) "—" else percent.toString()) + "% · " +
                 (entry.stars?.toString() ?: "—") + "★",
                 color = historyAccent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 listOf("ATAQUE","DEFESA","PS").forEachIndexed { index, label ->
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(label, color = historyMuted, fontSize = 10.sp)
-                        Text(attributes[index].toString() + "/15", color = historyInk,
+                        Text((if (entry.iv == null) "—" else attributes[index].toString()) + "/15", color = historyInk,
                             fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         if (entry.own && entry.iv != null) Row(
                             verticalAlignment = Alignment.CenterVertically) {
